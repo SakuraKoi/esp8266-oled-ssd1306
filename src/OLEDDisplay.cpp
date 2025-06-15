@@ -515,7 +515,7 @@ void OLEDDisplay::drawProgressBar(uint16_t x, uint16_t y, uint16_t width, uint16
 }
 
 void OLEDDisplay::drawFastImage(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint8_t *image) {
-  drawInternal(xMove, yMove, width, height, image, 0, 0);
+  drawInternal(xMove, yMove, width, height, reinterpret_cast<const uint16_t*>(image), 0, 0);
 }
 
 void OLEDDisplay::drawXbm(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint8_t *xbm) {
@@ -554,9 +554,9 @@ void OLEDDisplay::drawIco16x16(int16_t xMove, int16_t yMove, const uint8_t *ico,
 }
 
 uint16_t OLEDDisplay::drawStringInternal(int16_t xMove, int16_t yMove, const char* text, uint16_t textLength, uint16_t textWidth, bool utf8) {
-  uint8_t textHeight       = pgm_read_byte(fontData + HEIGHT_POS);
-  uint8_t firstChar        = pgm_read_byte(fontData + FIRST_CHAR_POS);
-  uint16_t sizeOfJumpTable = pgm_read_byte(fontData + CHAR_NUM_POS)  * JUMPTABLE_BYTES;
+  uint16_t textHeight       = pgm_read_word(fontData + HEIGHT_POS);
+  uint16_t firstChar        = pgm_read_word(fontData + FIRST_CHAR_POS);
+  uint16_t sizeOfJumpTable = pgm_read_word(fontData + CHAR_NUM_POS)  * JUMPTABLE_BYTES;
 
   uint16_t cursorX         = 0;
   uint16_t cursorY         = 0;
@@ -598,10 +598,10 @@ uint16_t OLEDDisplay::drawStringInternal(int16_t xMove, int16_t yMove, const cha
       uint8_t charCode = code - firstChar;
 
       // 4 Bytes per char code
-      uint8_t msbJumpToChar    = pgm_read_byte( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES );                  // MSB  \ JumpAddress
-      uint8_t lsbJumpToChar    = pgm_read_byte( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_LSB);   // LSB /
-      uint8_t charByteSize     = pgm_read_byte( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_SIZE);  // Size
-      uint8_t currentCharWidth = pgm_read_byte( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_WIDTH); // Width
+      uint16_t msbJumpToChar    = pgm_read_word( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES );                  // MSB  \ JumpAddress
+      uint16_t lsbJumpToChar    = pgm_read_word( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_LSB);   // LSB /
+      uint16_t charByteSize     = pgm_read_word( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_SIZE);  // Size
+      uint16_t currentCharWidth = pgm_read_word( fontData + JUMPTABLE_START + charCode * JUMPTABLE_BYTES + JUMPTABLE_WIDTH); // Width
 
       // Test if the char is drawable
       if (!(msbJumpToChar == 255 && lsbJumpToChar == 255)) {
@@ -618,7 +618,7 @@ uint16_t OLEDDisplay::drawStringInternal(int16_t xMove, int16_t yMove, const cha
 
 
 uint16_t OLEDDisplay::drawString(int16_t xMove, int16_t yMove, const String &strUser) {
-  uint16_t lineHeight = pgm_read_byte(fontData + HEIGHT_POS);
+  uint16_t lineHeight = pgm_read_word(fontData + HEIGHT_POS);
 
   // char* text must be freed!
   char* text = strdup(strUser.c_str());
@@ -662,8 +662,8 @@ void OLEDDisplay::drawStringf( int16_t x, int16_t y, char* buffer, String format
 }
 
 uint16_t OLEDDisplay::drawStringMaxWidth(int16_t xMove, int16_t yMove, uint16_t maxLineWidth, const String &strUser) {
-  uint16_t firstChar  = pgm_read_byte(fontData + FIRST_CHAR_POS);
-  uint16_t lineHeight = pgm_read_byte(fontData + HEIGHT_POS);
+  uint16_t firstChar  = pgm_read_word(fontData + FIRST_CHAR_POS);
+  uint16_t lineHeight = pgm_read_word(fontData + HEIGHT_POS);
 
   const char* text = strUser.c_str();
 
@@ -681,7 +681,7 @@ uint16_t OLEDDisplay::drawStringMaxWidth(int16_t xMove, int16_t yMove, uint16_t 
     char c = (this->fontTableLookupFunction)(text[i]);
     if (c == 0)
       continue;
-    strWidth += pgm_read_byte(fontData + JUMPTABLE_START + (c - firstChar) * JUMPTABLE_BYTES + JUMPTABLE_WIDTH);
+    strWidth += pgm_read_word(fontData + JUMPTABLE_START + (c - firstChar) * JUMPTABLE_BYTES + JUMPTABLE_WIDTH);
 
     // Always try to break on a space, dash or slash
     if (text[i] == ' ' || text[i]== '-' || text[i] == '/') {
@@ -719,7 +719,7 @@ uint16_t OLEDDisplay::drawStringMaxWidth(int16_t xMove, int16_t yMove, uint16_t 
 }
 
 uint16_t OLEDDisplay::getStringWidth(const char* text, uint16_t length, bool utf8) {
-  uint16_t firstChar        = pgm_read_byte(fontData + FIRST_CHAR_POS);
+  uint16_t firstChar        = pgm_read_word(fontData + FIRST_CHAR_POS);
 
   uint16_t stringWidth = 0;
   uint16_t maxWidth = 0;
@@ -731,7 +731,7 @@ uint16_t OLEDDisplay::getStringWidth(const char* text, uint16_t length, bool utf
       if (c == 0)
         continue;
     }
-    stringWidth += pgm_read_byte(fontData + JUMPTABLE_START + (c - firstChar) * JUMPTABLE_BYTES + JUMPTABLE_WIDTH);
+    stringWidth += pgm_read_word(fontData + JUMPTABLE_START + (c - firstChar) * JUMPTABLE_BYTES + JUMPTABLE_WIDTH);
     if (c == 10) {
       maxWidth = max(maxWidth, stringWidth);
       stringWidth = 0;
@@ -750,14 +750,14 @@ void OLEDDisplay::setTextAlignment(OLEDDISPLAY_TEXT_ALIGNMENT textAlignment) {
   this->textAlignment = textAlignment;
 }
 
-void OLEDDisplay::setFont(const uint8_t *fontData) {
+void OLEDDisplay::setFont(const uint16_t *fontData) {
   this->fontData = fontData;
   // New font, so must recalculate. Whatever was there is gone at next print.
   setLogBuffer();
 }
 
 void OLEDDisplay::setFont(const char *fontData) {
-  setFont(static_cast<const uint8_t*>(reinterpret_cast<const void*>(fontData)));
+  setFont(reinterpret_cast<const uint16_t*>(static_cast<const uint8_t*>(reinterpret_cast<const void*>(fontData))));
 }
 
 void OLEDDisplay::displayOn(void) {
@@ -832,7 +832,7 @@ void OLEDDisplay::drawLogBuffer(uint16_t xMove, uint16_t yMove) {
 }
 
 void OLEDDisplay::drawLogBuffer() {
-  uint16_t lineHeight = pgm_read_byte(fontData + HEIGHT_POS);
+  uint16_t lineHeight = pgm_read_word(fontData + HEIGHT_POS);
   // Always align left
   setTextAlignment(TEXT_ALIGN_LEFT);
 
@@ -897,7 +897,7 @@ bool OLEDDisplay::setLogBuffer(){
     free(logBuffer);
 
   // figure out how big it needs to be
-  uint8_t textHeight = pgm_read_byte(fontData + HEIGHT_POS);
+  uint16_t textHeight = pgm_read_word(fontData + HEIGHT_POS);
   if (!textHeight)
     return false;  // Prevent division by zero crashes
   uint16_t lines =  this->displayHeight / textHeight + (this->displayHeight % textHeight ? 1 : 0);
@@ -1094,7 +1094,7 @@ void OLEDDisplay::sendInitCommands(void) {
   sendCommand(DISPLAYON);
 }
 
-void inline OLEDDisplay::drawInternal(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint8_t *data, uint16_t offset, uint16_t bytesInData) {
+void inline OLEDDisplay::drawInternal(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint16_t *data, uint16_t offset, uint16_t bytesInData) {
   if (width < 0 || height < 0) return;
   if (yMove + height < 0 || yMove > this->height())  return;
   if (xMove + width  < 0 || xMove > this->width())   return;
@@ -1116,7 +1116,7 @@ void inline OLEDDisplay::drawInternal(int16_t xMove, int16_t yMove, int16_t widt
       yOffset = initYOffset;
     }
 
-    uint8_t currentByte = pgm_read_byte(data + offset + i);
+    uint16_t currentByte =  pgm_read_word(data + offset + i);
 
     int16_t xPos = xMove + (i / rasterHeight);
     int16_t yPos = ((yMove >> 3) + (i % rasterHeight)) * this->width();

@@ -269,7 +269,7 @@ class OLEDDisplay : public Stream {
 
     // Sets the current font. Available default fonts
     // ArialMT_Plain_10, ArialMT_Plain_16, ArialMT_Plain_24
-    void setFont(const uint8_t *fontData);
+    void setFont(const uint16_t *fontData);
 
     // Set the current font when supplied as a char* instead of a uint8_t*
     void setFont(const char *fontData);
@@ -369,7 +369,7 @@ class OLEDDisplay : public Stream {
     OLEDDISPLAY_TEXT_ALIGNMENT   textAlignment;
     OLEDDISPLAY_COLOR            color;
 
-    const uint8_t	 *fontData;
+    const uint16_t	 *fontData;
 
     // State values for logBuffer
     uint16_t   logBufferSize;
@@ -397,7 +397,7 @@ class OLEDDisplay : public Stream {
     // converts utf8 characters to extended ascii
     char* utf8ascii(const String &s);
 
-    void inline drawInternal(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint8_t *data, uint16_t offset, uint16_t bytesInData) __attribute__((always_inline));
+    void inline drawInternal(int16_t xMove, int16_t yMove, int16_t width, int16_t height, const uint16_t *data, uint16_t offset, uint16_t bytesInData) __attribute__((always_inline));
 
     uint16_t drawStringInternal(int16_t xMove, int16_t yMove, const char* text, uint16_t textLength, uint16_t textWidth, bool utf8);
 
